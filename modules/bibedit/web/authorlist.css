@@ -142,6 +142,10 @@ button.AuthorlistDelete {
     margin-right : 30px;
 }
 
+button.AuthorlistExport {
+    margin-right : 30px;
+}
+
 button.AuthorlistAdd {
     margin-left : 20px;
 }

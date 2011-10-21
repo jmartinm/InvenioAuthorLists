@@ -344,8 +344,18 @@ class WebInterfaceEditPages(WebInterfaceDirectory):
                 # redirect to the main page if something weird happens
                 redirect_to_url(req, '%s/%s/edit/authorlist' % (CFG_SITE_URL, 
                                                                CFG_SITE_RECORD))
-            
-                                                               
+
+        elif state == 'import':
+            try:
+                received = wash_urlargd(form, {'importid': (str, None)})
+                recID = received['importid']
+                data = authorlist_engine.retrieve_data_from_record(recID)
+                req.content_type = 'application/json'
+                req.write(json.dumps(data))
+            except:
+                 # redirect to the main page if something weird happens
+                redirect_to_url(req, '%s/%s/edit/authorlist' % (CFG_SITE_URL,
+                                                               CFG_SITE_RECORD))
         # No state given, just go to the main page.    
         else:
             redirect_to_url(req, '%s/%s/edit/authorlist' % (CFG_SITE_URL, 

@@ -22,6 +22,51 @@ import simplejson as json
 from xml.dom.minidom import getDOMImplementation
 
 import invenio.authorlist_config as cfg
+from invenio.search_engine import get_fieldvalues
+from invenio.bibedit_utils import get_record
+
+def retrieve_data_from_record(recid):
+    """
+    Extract data from a record id in order to import it to the Author list
+    interface
+    """
+    output = {}
+
+    bibrecord = get_record(recid)
+    # Extract authors
+    try:
+        #FIXME include more fine-grained exception handling
+        record_main_author = bibrecord['100']
+        record_authors = bibrecord['700']
+        record_authors.extend((record_main_author))
+    except KeyError:
+        return output
+    # Extract affiliations
+    record_affiliations = get_fieldvalues(int(recid), '700__u')
+    record_affiliations.extend(get_fieldvalues(int(recid), '100__u'))
+    # Add generic information about the paper
+    output.update({'collaboration': '', 'experiment_number': '', 'last_modified': int(time.time()), 'reference_ids': [], 'paper_id': '1', 'paper_title': ''})
+    # Generate all the author related information
+    author_list = []
+    for i in xrange(len(record_authors)):
+        inspire_id = [x[1] for x in record_authors[i][0][1:] if x[0] == 'i']
+        if not inspire_id:
+            inspire_id = ''
+        else:
+            inspire_id = inspire_id[0]
+        author_info = [long(i+1), '', record_authors[i][0][0][1].split(',')[0],record_authors[i][0][0][1].split(',')[1], record_authors[i][0][0][1], True, [[x[1], 'Affiliated with'] for x in record_authors[i][0][1:] if x[0] == 'u'], inspire_id]
+        author_list.append(author_info)
+
+    output.update({'authors': author_list})
+    # Generate all the affiliation related information
+    unique_affiliations = list(set(record_affiliations))
+    affiliation_list = []
+    for i in xrange(len(unique_affiliations)):
+        affiliation = [long(i+1), '', unique_affiliations[i], '', unique_affiliations[i], '', True, '']
+        affiliation_list.append(affiliation)
+    output.update( {'affiliations': affiliation_list})
+
+    return output
 
 class Converter(object):
     CONTENT_TYPE = 'text/plain'

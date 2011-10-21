@@ -59,6 +59,8 @@ Authorlist.CSS = {
     'DeleteIcon'        : 'ui-icon-trash',
     'Export'            : 'AuthorlistExport',
     'ExportIcon'        : 'ui-icon-document',
+    'Import'            : 'AuthorlistImport',
+    'ImportIcon'        : 'ui-icon-folder-open',
     'Remove'            : 'AuthorlistRemove',
     'RemoveIcon'        : 'ui-icon-minusthick',
     'Save'              : 'AuthorlistSave',
@@ -133,7 +135,7 @@ Authorlist.URLS = {
     'Load'              : '/record/edit/authorlist?state=load',
     'MainPage'          : '/record/edit/authorlist',
     'Open'              : '/record/edit/authorlist?state=open',
-    'Record'            : '/record/edit/authorlist?state=record',
+    'Import'            : '/record/edit/authorlist?state=import',
     'Save'              : '/record/edit/authorlist?state=save'
 }
 
@@ -498,14 +500,14 @@ Authorlist.prototype._fnCreateMenu = function( nParent ) {
     var nSave = this._fnCreateButton( nMenu, 'Save', Authorlist.CSS.SaveIcon );
     var nDeleteButton = this._fnCreateButton( nMenu, 'Delete', Authorlist.CSS.DeleteIcon );
     var nAuthorsXML = this._fnCreateButton( nMenu, 'AuthorsXML', Authorlist.CSS.ExportIcon );
-    var nRecord = this._fnCreateButton( nMenu, 'Record', Authorlist.CSS.ExportIcon );
+    var nImport = this._fnCreateButton( nMenu, 'Import', Authorlist.CSS.ImportIcon );
     
     // Add classes   
     nBackButton.addClass( Authorlist.CSS.Back );
     nSave.addClass( Authorlist.CSS.Save );
     nDeleteButton.addClass( Authorlist.CSS.Delete );
     nAuthorsXML.addClass( Authorlist.CSS.Export );
-    nRecord.addClass( Authorlist.CSS.Export );
+    nImport.addClass( Authorlist.CSS.Import );
     
     // Register callbacks for the buttons
     nBackButton.click( function() {
@@ -519,7 +521,11 @@ Authorlist.prototype._fnCreateMenu = function( nParent ) {
     nDeleteButton.click( function() {
         self._fnConfirm( self._fnDelete );
     } );
-    
+
+    nImport.click( function() {
+        self._fnImport();
+    } );
+
     jQuery( nMenu ).delegate( '.' + Authorlist.CSS.Export, 'click', function() {
         self._fnExport( this );
     } );
@@ -571,6 +577,73 @@ Authorlist.prototype._fnDelete = function() {
             var sPreamble = 'An error occured while deleting the sheet:';
             self._fnProgressDone();
             self._fnShowErrors( sPreamble, Authorlist.DEFAULT_ERROR );
+        }
+    } );
+}
+
+/*
+* Function: _fnImport
+* Purpose:  Imports data from a given record ID
+* Input(s): string: record ID to load
+* Returns:  void
+*
+*/
+Authorlist.prototype._fnImport = function() {
+    var self = this;
+
+    /* Create dialog to input record ID */
+    var nDialog = jQuery( '<div>' );
+    var nConfirmation = jQuery( '<p>' );
+    var nConfirmationIcon = jQuery( '<span>' );
+    var nConfirmationText = jQuery( '<span>' );
+    var nInput = jQuery( '<input>' );
+
+    // Add items to dialog and apply style through classes
+    nConfirmationText.html( 'Insert record ID to import from:' );
+    nDialog.addClass( Authorlist.CSS.Confirmation );
+    nConfirmation.addClass( Authorlist.CSS.ConfirmationTitle );
+    nConfirmationIcon.addClass( Authorlist.CSS.Icon );
+    nConfirmationIcon.addClass( Authorlist.CSS.ConfirmationIcon );
+
+    // Add elements to the DOM
+    nDialog.append( nConfirmation.append(nConfirmationIcon, nConfirmationText));
+    nDialog.append('<br />',nInput);
+    nDialog.appendTo( jQuery( 'body' ) );
+
+    var cancel = function() {
+            nDialog.dialog("close");
+    }
+    var getResponse = function() {
+        self._fnProgress();
+        var recordID = nInput.val();
+        jQuery.ajax( {
+        'type'    : 'POST',
+        'url'     : Authorlist.URLS.Import + '&importid=' + recordID,
+        'success' : function(oData) {
+            // Remove the working status
+            self._fnProgressDone();
+            self.fnLoadData( oData );
+            nDialog.dialog("close");
+        },
+        'error'   : function() {
+            // We are done with progressing and should display some errors.
+            var sPreamble = 'An error occured while importing the record';
+            self._fnProgressDone();
+            self._fnShowErrors( sPreamble, Authorlist.DEFAULT_ERROR );
+        }
+    } );
+    }
+    // Instantiate a jQuery UI dialog widget
+    nDialog.dialog( {
+        'resizable'   : true,
+        'dialogClass' : Authorlist.CSS.Dialog,
+        'minWidth'    : 'auto',
+        'width'       : 'auto',
+        'minHeight'   : 128,
+        'height'      : 148,
+        'buttons'     : {
+            'Import' : getResponse,
+            'Cancel' : cancel
         }
     } );
 }
