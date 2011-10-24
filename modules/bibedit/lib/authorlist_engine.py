@@ -18,12 +18,15 @@
 """ Invenio Authorlist Data Conversion Engine. """
 
 import time
+import tempfile
 import simplejson as json
 from xml.dom.minidom import getDOMImplementation
 
 import invenio.authorlist_config as cfg
 from invenio.search_engine import get_fieldvalues
 from invenio.bibedit_utils import get_record
+from invenio.shellutils import run_shell_command
+from invenio.config import CFG_BINDIR, CFG_TMPSHAREDDIR
 
 def retrieve_data_from_record(recid):
     """
@@ -94,6 +97,35 @@ class NA62Latex(Converter):
         
     def dumps(self, data):
         pass
+
+class ElsevierArticle(Converter):
+    CONTENT_TYPE = 'text/plain'
+    FILE_NAME = 'elsarticle.tex'
+
+    def __init__(self):
+        pass
+
+    def dump(self, data):
+        AuthorsXMLConverter = Converters.get('authorsxml')
+        AuthorsXML = dumps(data, AuthorsXMLConverter)
+
+        # write temporary file:
+        tempfile.tempdir = CFG_TMPSHAREDDIR
+        temp_filename = tempfile.mktemp(prefix="authorlistconvert" + \
+               time.strftime("%Y%m%d%H%M%S", time.localtime()) + "_")
+        open(temp_filename, 'w').write(AuthorsXML)
+
+        # Use bibconvert for XSLT transformation
+        # FIXME store xsl files in some folder and create a config
+        # variable to define available templates
+        template_path = '/tmp/LaTex_Type_1.xsl'
+        dummy, myout, myerr = run_shell_command(cmd='%s/bibconvert -c%s < %s', \
+                                                args=(CFG_BINDIR, template_path, \
+                                                temp_filename))
+        return myout
+
+    def dumps(self, data):
+        return self.dump(data).encode('utf-8')
         
 class AuthorsXML(Converter):
     CONTENT_TYPE = 'text/xml'
@@ -319,7 +351,7 @@ class AuthorsXML(Converter):
         return ids
         
 class Converters:
-    __converters__ = {'authorsxml' : AuthorsXML}
+    __converters__ = {'authorsxml' : AuthorsXML, 'elsevier': ElsevierArticle}
     
     @classmethod
     def get(cls, format):

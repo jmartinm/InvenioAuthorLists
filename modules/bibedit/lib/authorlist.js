@@ -58,6 +58,7 @@ Authorlist.CSS = {
     'Delete'            : 'AuthorlistDelete',
     'DeleteIcon'        : 'ui-icon-trash',
     'Export'            : 'AuthorlistExport',
+    'ExportElse'        : 'AuthorlistExportElse',
     'ExportIcon'        : 'ui-icon-document',
     'Import'            : 'AuthorlistImport',
     'ImportIcon'        : 'ui-icon-folder-open',
@@ -128,6 +129,7 @@ Authorlist.INDICES = {
 */
 Authorlist.URLS = {
     'AuthorsXML'        : '/record/edit/authorlist?state=export&format=authorsxml',
+    'ElsevierArticle'   : '/record/edit/authorlist?state=export&format=elsevier',
     'Clone'             : '/record/edit/authorlist?state=clone',
     'Delete'            : '/record/edit/authorlist?state=delete',
     'Itemize'           : '/record/edit/authorlist?state=itemize',
@@ -500,6 +502,7 @@ Authorlist.prototype._fnCreateMenu = function( nParent ) {
     var nSave = this._fnCreateButton( nMenu, 'Save', Authorlist.CSS.SaveIcon );
     var nDeleteButton = this._fnCreateButton( nMenu, 'Delete', Authorlist.CSS.DeleteIcon );
     var nAuthorsXML = this._fnCreateButton( nMenu, 'AuthorsXML', Authorlist.CSS.ExportIcon );
+    var nElsevier = this._fnCreateButton( nMenu, 'ElsevierArticle', Authorlist.CSS.ExportIcon );
     var nImport = this._fnCreateButton( nMenu, 'Import', Authorlist.CSS.ImportIcon );
     
     // Add classes   
@@ -507,6 +510,7 @@ Authorlist.prototype._fnCreateMenu = function( nParent ) {
     nSave.addClass( Authorlist.CSS.Save );
     nDeleteButton.addClass( Authorlist.CSS.Delete );
     nAuthorsXML.addClass( Authorlist.CSS.Export );
+    nElsevier.addClass( Authorlist.CSS.Export + ' ' + Authorlist.CSS.ExportElse );
     nImport.addClass( Authorlist.CSS.Import );
     
     // Register callbacks for the buttons
